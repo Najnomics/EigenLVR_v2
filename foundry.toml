@@ -1,0 +1,38 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib", "node_modules"]
+test = "test"
+cache_path = "cache_forge"
+
+remappings = [
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+    "@uniswap/v4-core/=node_modules/@uniswap/v4-core/",
+    "v4-periphery/=node_modules/@uniswap/v4-periphery/",
+    "@fhenixprotocol/cofhe-contracts/=node_modules/@fhenixprotocol/cofhe-contracts/",
+    "@across-protocol/contracts/=node_modules/@across-protocol/contracts/",
+    "forge-std/=node_modules/.pnpm/@uniswap+v4-core@1.0.2/node_modules/@uniswap/v4-core/lib/forge-std/src/"
+]
+
+# Compiler settings for FHE and cross-chain integration
+solc = "0.8.26"
+optimizer = true
+optimizer_runs = 1000000
+via_ir = true
+
+# Additional compiler settings for complex contracts
+evm_version = "cancun"
+bytecode_hash = "none"
+cbor_metadata = false
+
+[profile.ci]
+fuzz_runs = 10000
+verbosity = 4
+
+[profile.coverage]
+ir_minimum = true
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = true

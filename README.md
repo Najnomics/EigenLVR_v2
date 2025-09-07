@@ -269,7 +269,7 @@ contract EigenLVR_Universal is EigenLVRHook {
         
         // Notify AVS operators about private auction
         IAVSServiceManager(serviceManager).createPrivateAuction(
-            auctionId,
+            auctio
             encryptedMinBid,
             encryptedReserve
         );
