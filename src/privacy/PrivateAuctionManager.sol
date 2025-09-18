@@ -88,7 +88,21 @@ contract PrivateAuctionManager is ReentrancyGuard, Ownable {
     //////////////////////////////////////////////////////////////*/
     
     constructor() Ownable(msg.sender) {
-        // Initialize with zero values for FHE operations
+        // Skip FHE initialization in constructor to avoid external contract calls
+        // FHE will be initialized when needed via initializeFHE() function
+    }
+    
+    function _initializeFHE() external {
+        euint128 zero = FHE.asEuint128(0);
+        euint64 zeroTime = FHE.asEuint64(0);
+        
+        // Grant contract permission to use these base values
+        FHE.allowThis(zero);
+        FHE.allowThis(zeroTime);
+    }
+    
+    // Alternative initialization method that can be called after deployment
+    function initializeFHE() external {
         euint128 zero = FHE.asEuint128(0);
         euint64 zeroTime = FHE.asEuint64(0);
         

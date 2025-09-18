@@ -1,0 +1,225 @@
+name: Comprehensive Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-suite: [
+          'EigenLVR_V2_Basic',
+          'EigenLVR_V2_AdminTests',
+          'EigenLVR_V2_AuctionTests',
+          'EigenLVR_V2_LiquidityTests',
+          'EigenLVR_V2_LVRDetectionTests',
+          'EigenLVR_V2_200Tests',
+          'EigenLVR_V2_Comprehensive',
+          'EigenLVR_V2_ContractTest',
+          'EigenLVR_V2_Simple'
+        ]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+        
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: |
+        pnpm install
+        forge install --no-commit
+        
+    - name: Build contracts
+      run: forge build --via-ir
+      
+    - name: Run ${{ matrix.test-suite }} tests
+      run: forge test --via-ir --match-contract ${{ matrix.test-suite }} -vv
+      
+    - name: Run ${{ matrix.test-suite }} with gas reporting
+      run: forge test --via-ir --match-contract ${{ matrix.test-suite }} --gas-report
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+        
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: |
+        pnpm install
+        forge install --no-commit
+        
+    - name: Build contracts
+      run: forge build --via-ir
+      
+    - name: Run integration tests
+      run: forge test --via-ir --match-contract EigenLVR_V2Test -vv
+      
+    - name: Run integration tests with gas reporting
+      run: forge test --via-ir --match-contract EigenLVR_V2Test --gas-report
+
+  fuzz-tests:
+    name: Fuzz Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+        
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: |
+        pnpm install
+        forge install --no-commit
+        
+    - name: Build contracts
+      run: forge build --via-ir
+      
+    - name: Run fuzz tests
+      run: forge test --via-ir --fuzz-runs 10000 --match-test testFuzz
+      
+    - name: Run invariant tests
+      run: forge test --via-ir --match-test testInvariant
+
+  coverage:
+    name: Coverage Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+        
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: |
+        pnpm install
+        forge install --no-commit
+        
+    - name: Build contracts
+      run: forge build --via-ir
+      
+    - name: Generate coverage report
+      run: forge coverage --via-ir --ir-minimum
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+        
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'pnpm'
+        
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        
+    - name: Install dependencies
+      run: |
+        pnpm install
+        forge install --no-commit
+        
+    - name: Build contracts
+      run: forge build --via-ir
+      
+    - name: Run performance tests
+      run: forge test --via-ir --match-test testPerformance --gas-report
+      
+    - name: Create gas snapshot
+      run: forge snapshot --via-ir
+      
+    - name: Upload gas snapshot
+      uses: actions/upload-artifact@v3
+      with:
+        name: gas-snapshot
+        path: .gas-snapshot

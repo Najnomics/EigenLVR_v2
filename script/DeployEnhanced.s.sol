@@ -6,7 +6,7 @@ import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 
-import {EigenLVR_Enhanced} from "../src/EigenLVR_Enhanced.sol";
+import {EigenLVR_V2} from "../src/EigenLVR_V2.sol";
 import {CrossChainPriceMonitor} from "../src/crosschain/CrossChainPriceMonitor.sol";
 import {PrivateAuctionManager} from "../src/privacy/PrivateAuctionManager.sol";
 import {IAVSDirectory} from "../src/interfaces/IAVSDirectory.sol";
@@ -23,7 +23,7 @@ contract DeployEnhanced is Script {
     //////////////////////////////////////////////////////////////*/
     
     // Production addresses - replace with actual deployment addresses
-    address constant POOL_MANAGER = 0x8C4BcBE6b9eF47354169CdE11669E64DB2Bb9FD0;
+    address constant POOL_MANAGER = 0x8c4BcbE6b9ef47354169cDE11669E64db2bb9fd0;
     address constant AVS_DIRECTORY = 0x135ddaA4e3d9c0B63e84bDA24E21e5c7Cef6F916;
     address constant PRICE_ORACLE = 0x04f5e2B9e7e5D8E3b64B3b4f8B1D5F12ab3f5b6C;
     
@@ -53,9 +53,9 @@ contract DeployEnhanced is Script {
         console2.log("Deploying PrivateAuctionManager...");
         PrivateAuctionManager auctionManager = new PrivateAuctionManager();
         
-        // 3. Deploy main Enhanced Hook
-        console2.log("Deploying EigenLVR_Enhanced...");
-        EigenLVR_Enhanced hook = new EigenLVR_Enhanced(
+        // 3. Deploy main V2 Hook
+        console2.log("Deploying EigenLVR_V2...");
+        EigenLVR_V2 hook = new EigenLVR_V2(
             IPoolManager(POOL_MANAGER),
             IAVSDirectory(AVS_DIRECTORY),
             IPriceOracle(PRICE_ORACLE),
@@ -84,14 +84,14 @@ contract DeployEnhanced is Script {
         console2.log("=== Deployment Complete ===");
         console2.log("CrossChainPriceMonitor:", address(priceMonitor));
         console2.log("PrivateAuctionManager:", address(auctionManager));
-        console2.log("EigenLVR_Enhanced:", address(hook));
+        console2.log("EigenLVR_V2:", address(hook));
         console2.log("================================");
         
         // 7. Verify deployment
         _verifyDeployment(
             address(priceMonitor),
             address(auctionManager),
-            address(hook)
+            payable(address(hook))
         );
         
         // 8. Generate configuration files for AVS
@@ -140,7 +140,7 @@ contract DeployEnhanced is Script {
     function _verifyDeployment(
         address priceMonitor,
         address auctionManager,
-        address hook
+        address payable hook
     ) internal view {
         console2.log("Verifying deployment...");
         
@@ -158,17 +158,17 @@ contract DeployEnhanced is Script {
         
         // Verify hook configuration
         require(
-            address(EigenLVR_Enhanced(hook).crossChainMonitor()) == priceMonitor,
+            address(EigenLVR_V2(hook).crossChainMonitor()) == priceMonitor,
             "Price monitor mismatch"
         );
         require(
-            address(EigenLVR_Enhanced(hook).privateAuctionManager()) == auctionManager,
+            address(EigenLVR_V2(hook).privateAuctionManager()) == auctionManager,
             "Auction manager mismatch"
         );
         console2.log("Hook configuration verified");
         
         // Verify hook permissions
-        Hooks.Permissions memory permissions = EigenLVR_Enhanced(hook).getHookPermissions();
+        Hooks.Permissions memory permissions = EigenLVR_V2(hook).getHookPermissions();
         require(permissions.afterInitialize, "afterInitialize not enabled");
         require(permissions.beforeSwap, "beforeSwap not enabled");
         require(permissions.afterSwap, "afterSwap not enabled");

@@ -5,6 +5,9 @@ libs = ["lib", "node_modules"]
 test = "test"
 cache_path = "cache_forge"
 
+# Exclude context directory from compilation
+exclude = ["context/**/*.sol"]
+
 remappings = [
     "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
     "@uniswap/v4-core/=node_modules/@uniswap/v4-core/",

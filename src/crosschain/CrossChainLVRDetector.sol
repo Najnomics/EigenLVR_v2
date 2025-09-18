@@ -256,10 +256,10 @@ contract CrossChainLVRDetector is Ownable {
      * @notice Check if sufficient liquidity exists for arbitrage
      */
     function _hasSufficientLiquidity(
-        uint256 chainId,
-        bytes32 tokenPair,
-        uint256 requiredVolume
-    ) internal view returns (bool) {
+        uint256 /* chainId */,
+        bytes32 /* tokenPair */,
+        uint256 /* requiredVolume */
+    ) internal pure returns (bool) {
         // Simplified check - in production would parse token addresses from pair hash
         // and check actual liquidity for both tokens
         return true; // Placeholder implementation
@@ -341,7 +341,7 @@ contract CrossChainLVRDetector is Ownable {
     /**
      * @notice Get all supported chain IDs
      */
-    function getSupportedChains() external view returns (uint256[] memory) {
+    function getSupportedChains() external pure returns (uint256[] memory) {
         uint256[] memory chains = new uint256[](5);
         chains[0] = 1;     // Ethereum
         chains[1] = 42161; // Arbitrum
