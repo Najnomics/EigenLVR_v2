@@ -218,6 +218,10 @@ test/
 
 #### **Coverage Commands**
 ```bash
+
+# install dependencies 
+
+pnpm install
 # Generate coverage report
 forge coverage --ir-minimum
 
