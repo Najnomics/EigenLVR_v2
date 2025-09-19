@@ -1,0 +1,13 @@
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-verify";
+import "@nomiclabs/hardhat-waffle";
+import "@typechain/hardhat";
+import "@matterlabs/hardhat-zksync-solc";
+import "@matterlabs/hardhat-zksync-verify";
+import "@matterlabs/hardhat-zksync-upgradable";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
+import "hardhat-deploy";
+import "@openzeppelin/hardhat-upgrades";
+declare const config: HardhatUserConfig;
+export default config;
