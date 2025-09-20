@@ -28,20 +28,20 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {FHE, InEuint128, InEuint64, euint128, euint64, ebool} from "@fhenixprotocol/cofhe-contracts/FHE.sol";
 
 // Core LVR Components (from original EigenLVR)
-import {IAVSDirectory} from "./interfaces/IAVSDirectory.sol";
-import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
-import {AuctionLib} from "./libraries/AuctionLib.sol";
+import {IAVSDirectory} from "../interfaces/IAVSDirectory.sol";
+import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
+import {AuctionLib} from "../libraries/AuctionLib.sol";
 
 // Enhanced Components
-import {CrossChainPriceMonitor} from "./crosschain/CrossChainPriceMonitor.sol";
-import {PrivateAuctionManager} from "./privacy/PrivateAuctionManager.sol";
+import {CrossChainPriceMonitor} from "../crosschain/CrossChainPriceMonitor.sol";
+import {PrivateAuctionManager} from "../privacy/PrivateAuctionManager.sol";
 
 /**
  * @dev Production-ready evolution of the proven EigenLVR Hook:
- * ✅ Maintains proven 85% LP reward distribution
- * ✅ Adds FHE private auctions for institutional privacy
- * ✅ Enhances LVR detection with cross-chain price data
- * ✅ Backwards compatible with existing infrastructure
+ *  Maintains proven 85% LP reward distribution
+ *  Adds FHE private auctions for institutional privacy
+ *  Enhances LVR detection with cross-chain price data
+ *  Backwards compatible with existing infrastructure
  */
 contract EigenLVR_V2 is BaseHook, ReentrancyGuard, Ownable, Pausable {
     using PoolIdLibrary for PoolKey;

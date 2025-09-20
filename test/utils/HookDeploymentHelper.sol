@@ -4,7 +4,7 @@ pragma solidity ^0.8.26;
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
-import {EigenLVR_V2} from "../../src/EigenLVR_V2.sol";
+import {EigenLVR_V2} from "../../src/hook/EigenLVR_V2.sol";
 import {IAVSDirectory} from "../../src/interfaces/IAVSDirectory.sol";
 import {IPriceOracle} from "../../src/interfaces/IPriceOracle.sol";
 

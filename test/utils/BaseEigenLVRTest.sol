@@ -11,7 +11,7 @@ import {Currency, CurrencyLibrary} from "@uniswap/v4-core/src/types/Currency.sol
 import {BalanceDelta} from "@uniswap/v4-core/src/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/src/types/BeforeSwapDelta.sol";
 import {SwapParams, ModifyLiquidityParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
-import {EigenLVR_V2} from "../../src/EigenLVR_V2.sol";
+import {EigenLVR_V2} from "../../src/hook/EigenLVR_V2.sol";
 import {IAVSDirectory} from "../../src/interfaces/IAVSDirectory.sol";
 import {IPriceOracle} from "../../src/interfaces/IPriceOracle.sol";
 import {HookMiner} from "./HookMiner.sol";

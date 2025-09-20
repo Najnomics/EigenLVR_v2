@@ -40,7 +40,7 @@ echo -e "${GREEN}✅ Contracts are built${NC}"
 
 # Deploy contracts
 echo -e "${YELLOW}Deploying contracts to Anvil...${NC}"
-forge script script/DeployEnhanced.s.sol \
+forge script script/DeployAnvil.s.sol \
     --rpc-url $ANVIL_RPC_URL \
     --private-key $PRIVATE_KEY \
     --broadcast \
@@ -52,7 +52,7 @@ echo -e "${GREEN}✅ Contracts deployed successfully${NC}"
 echo -e "${YELLOW}Retrieving deployment addresses...${NC}"
 
 # Read deployment addresses from broadcast files
-BROADCAST_DIR="broadcast/DeployEnhanced.s.sol/$ANVIL_CHAIN_ID/run-latest.json"
+BROADCAST_DIR="broadcast/DeployAnvil.s.sol/$ANVIL_CHAIN_ID/run-latest.json"
 
 if [ -f "$BROADCAST_DIR" ]; then
     echo -e "${BLUE}Deployment Summary:${NC}"

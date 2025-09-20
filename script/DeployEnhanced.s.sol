@@ -6,7 +6,7 @@ import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 
-import {EigenLVR_V2} from "../src/EigenLVR_V2.sol";
+import {EigenLVR_V2} from "../src/hook/EigenLVR_V2.sol";
 import {CrossChainPriceMonitor} from "../src/crosschain/CrossChainPriceMonitor.sol";
 import {PrivateAuctionManager} from "../src/privacy/PrivateAuctionManager.sol";
 import {IAVSDirectory} from "../src/interfaces/IAVSDirectory.sol";

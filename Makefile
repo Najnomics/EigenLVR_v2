@@ -32,6 +32,8 @@ help:
 	@echo "$(BLUE)Deployment:$(NC)"
 	@echo "  make start-anvil     Start local Anvil blockchain"
 	@echo "  make deploy-anvil    Deploy to Anvil"
+	@echo "  make deploy-testnet  Deploy to testnet (Sepolia)"
+	@echo "  make deploy-mainnet  Deploy to mainnet"
 	@echo "  make stop-anvil      Stop Anvil blockchain"
 	@echo ""
 	@echo "$(BLUE)Utils:$(NC)"
@@ -102,7 +104,7 @@ stop-anvil:
 
 deploy-anvil: build
 	@echo "$(GREEN)Deploying to Anvil...$(NC)"
-	@forge script script/DeployEigenLVRv2.s.sol \
+	@forge script script/DeployAnvil.s.sol \
 		--rpc-url http://localhost:8545 \
 		--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
 		--broadcast \
@@ -175,12 +177,27 @@ debug-test:
 deploy-sepolia:
 	@echo "$(GREEN)Deploying to Sepolia testnet...$(NC)"
 	@if [ -z "$(PRIVATE_KEY)" ]; then echo "$(RED)Set PRIVATE_KEY environment variable$(NC)"; exit 1; fi
-	@forge script script/DeployEigenLVRv2.s.sol \
+	@forge script script/DeployEnhanced.s.sol \
 		--rpc-url https://sepolia.infura.io/v3/$(INFURA_KEY) \
 		--private-key $(PRIVATE_KEY) \
 		--broadcast \
 		--verify \
 		--via-ir
+
+deploy-testnet: deploy-sepolia
+	@echo "$(GREEN)✅ Testnet deployment completed$(NC)"
+
+deploy-mainnet:
+	@echo "$(GREEN)Deploying to Ethereum mainnet...$(NC)"
+	@if [ -z "$(PRIVATE_KEY)" ]; then echo "$(RED)Set PRIVATE_KEY environment variable$(NC)"; exit 1; fi
+	@forge script script/DeployEnhanced.s.sol \
+		--rpc-url https://mainnet.infura.io/v3/$(INFURA_KEY) \
+		--private-key $(PRIVATE_KEY) \
+		--broadcast \
+		--verify \
+		--via-ir \
+		--slow
+	@echo "$(GREEN)✅ Mainnet deployment completed$(NC)"
 
 # Documentation
 docs:

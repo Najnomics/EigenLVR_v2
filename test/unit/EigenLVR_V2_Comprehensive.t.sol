@@ -8,6 +8,8 @@ import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {BalanceDelta} from "@uniswap/v4-core/src/types/BalanceDelta.sol";
+import {Currency} from "@uniswap/v4-core/src/types/Currency.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title EigenLVR_V2_ComprehensiveTest
@@ -202,5 +204,540 @@ contract EigenLVR_V2_ComprehensiveTest is BaseEigenLVRTest {
     function test30_HookPermissionsAfterUnpause() public view {
         Hooks.Permissions memory permissions = hook.getHookPermissions();
         assertTrue(permissions.afterInitialize, "afterInitialize should be enabled");
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        HOOK FUNCTION TESTS (31-50)
+    //////////////////////////////////////////////////////////////*/
+
+    function test31_AfterInitialize() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        poolManager.callAfterInitialize(testPoolKey, 79228162514264337593543950336, 0);
+        assertTrue(true, "afterInitialize should not revert");
+    }
+
+    function test32_BeforeAddLiquidity() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -60,
+            tickUpper: 60,
+            liquidityDelta: 1000e18,
+            salt: 0
+        });
+        
+        bytes4 selector = poolManager.callBeforeAddLiquidity(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeAddLiquidity.selector, "Should return correct selector");
+    }
+
+    function test33_BeforeRemoveLiquidity() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -60,
+            tickUpper: 60,
+            liquidityDelta: -500e18,
+            salt: 0
+        });
+        
+        bytes4 selector = poolManager.callBeforeRemoveLiquidity(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeRemoveLiquidity.selector, "Should return correct selector");
+    }
+
+    function test34_BeforeSwap() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector, uint128 delta) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should return correct selector");
+        assertEq(delta, 0, "Should return zero delta");
+    }
+
+    function test35_AfterSwap() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector, int128 delta) = poolManager.callAfterSwap(address(this), testPoolKey, params, BalanceDelta.wrap(0), "");
+        assertEq(selector, hook.afterSwap.selector, "Should return correct selector");
+        assertEq(delta, 0, "Should return zero delta");
+    }
+
+    function test36_AfterInitializeWithDifferentPrices() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        priceOracle.setPrice(TOKEN0, TOKEN1, 4000e18);
+        poolManager.callAfterInitialize(testPoolKey, 79228162514264337593543950336, 0);
+        assertTrue(true, "afterInitialize should work with different prices");
+    }
+
+    function test37_BeforeAddLiquidityWithLargeAmount() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -60,
+            tickUpper: 60,
+            liquidityDelta: 1e30,
+            salt: 0
+        });
+        
+        bytes4 selector = poolManager.callBeforeAddLiquidity(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeAddLiquidity.selector, "Should handle large amounts");
+    }
+
+    function test38_BeforeRemoveLiquidityWithLargeAmount() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -60,
+            tickUpper: 60,
+            liquidityDelta: -1e30,
+            salt: 0
+        });
+        
+        bytes4 selector = poolManager.callBeforeRemoveLiquidity(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeRemoveLiquidity.selector, "Should handle large amounts");
+    }
+
+    function test39_BeforeSwapWithLargeAmount() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e30,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector, uint128 delta) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle large amounts");
+    }
+
+    function test40_AfterSwapWithLargeDelta() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector, int128 delta) = poolManager.callAfterSwap(address(this), testPoolKey, params, BalanceDelta.wrap(1e18), "");
+        assertEq(selector, hook.afterSwap.selector, "Should handle large deltas");
+    }
+
+    function test41_HookFunctionsWithDifferentCallers() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(ALICE, testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should work with different callers");
+    }
+
+    function test42_HookFunctionsWithDifferentTokens() public {
+        Currency newToken0 = Currency.wrap(0x7777777777777777777777777777777777777777);
+        Currency newToken1 = Currency.wrap(0x8888888888888888888888888888888888888888);
+        
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: newToken0,
+            currency1: newToken1,
+            fee: 500,
+            tickSpacing: 10,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should work with different tokens");
+    }
+
+    function test43_HookFunctionsWithDifferentFees() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 10000,
+            tickSpacing: 200,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should work with different fees");
+    }
+
+    function test44_HookFunctionsWithZeroAmount() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 0,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle zero amounts");
+    }
+
+    function test45_HookFunctionsWithMaxAmount() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: type(int256).max,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle max amounts");
+    }
+
+    function test46_HookFunctionsWithMinAmount() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: type(int256).min,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle min amounts");
+    }
+
+    function test47_HookFunctionsWithPriceLimit() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 79228162514264337593543950336
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle price limits");
+    }
+
+    function test48_HookFunctionsWithZeroForOneTrue() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle zeroForOne true");
+    }
+
+    function test49_HookFunctionsWithZeroForOneFalse() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: false,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        (bytes4 selector,) = poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        assertEq(selector, hook.beforeSwap.selector, "Should handle zeroForOne false");
+    }
+
+    function test50_HookFunctionsGasUsage() public {
+        PoolKey memory testPoolKey = PoolKey({
+            currency0: TOKEN0,
+            currency1: TOKEN1,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+        
+        SwapParams memory params = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1e18,
+            sqrtPriceLimitX96: 0
+        });
+        
+        uint256 gasStart = gasleft();
+        poolManager.callBeforeSwap(address(this), testPoolKey, params, "");
+        uint256 gasUsed = gasStart - gasleft();
+        
+        assertTrue(gasUsed < 1000000, "Gas usage should be reasonable");
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        ADMIN FUNCTION TESTS (51-70)
+    //////////////////////////////////////////////////////////////*/
+
+    function test51_SetOperatorAuthorization() public {
+        hook.setOperatorAuthorization(ALICE, true);
+        assertTrue(hook.authorizedOperators(ALICE), "Alice should be authorized");
+        
+        hook.setOperatorAuthorization(ALICE, false);
+        assertFalse(hook.authorizedOperators(ALICE), "Alice should not be authorized");
+    }
+
+    function test52_SetOperatorAuthorizationMultiple() public {
+        hook.setOperatorAuthorization(ALICE, true);
+        hook.setOperatorAuthorization(BOB, true);
+        hook.setOperatorAuthorization(CHARLIE, true);
+        
+        assertTrue(hook.authorizedOperators(ALICE), "Alice should be authorized");
+        assertTrue(hook.authorizedOperators(BOB), "Bob should be authorized");
+        assertTrue(hook.authorizedOperators(CHARLIE), "Charlie should be authorized");
+    }
+
+    function test53_SetOperatorAuthorizationOnlyOwner() public {
+        vm.prank(ALICE);
+        vm.expectRevert();
+        hook.setOperatorAuthorization(BOB, true);
+    }
+
+    function test54_SetLVRThreshold() public {
+        hook.setLVRThreshold(100);
+        assertEq(hook.lvrThreshold(), 100, "LVR threshold should be updated");
+    }
+
+    function test55_SetLVRThresholdZero() public {
+        hook.setLVRThreshold(0);
+        assertEq(hook.lvrThreshold(), 0, "LVR threshold should be zero");
+    }
+
+    function test56_SetLVRThresholdMax() public {
+        hook.setLVRThreshold(1000);
+        assertEq(hook.lvrThreshold(), 1000, "LVR threshold should be max");
+    }
+
+    function test57_SetLVRThresholdTooHigh() public {
+        vm.expectRevert("Threshold too high");
+        hook.setLVRThreshold(1001);
+    }
+
+    function test58_SetLVRThresholdOnlyOwner() public {
+        vm.prank(ALICE);
+        vm.expectRevert();
+        hook.setLVRThreshold(100);
+    }
+
+    function test59_Pause() public {
+        assertFalse(hook.paused(), "Should not be paused initially");
+        hook.pause();
+        assertTrue(hook.paused(), "Should be paused after pause()");
+    }
+
+    function test60_Unpause() public {
+        hook.pause();
+        assertTrue(hook.paused(), "Should be paused");
+        hook.unpause();
+        assertFalse(hook.paused(), "Should be unpaused");
+    }
+
+    function test61_PauseOnlyOwner() public {
+        vm.prank(ALICE);
+        vm.expectRevert();
+        hook.pause();
+    }
+
+    function test62_UnpauseOnlyOwner() public {
+        hook.pause();
+        vm.prank(ALICE);
+        vm.expectRevert();
+        hook.unpause();
+    }
+
+    function test63_PauseWhenAlreadyPaused() public {
+        hook.pause();
+        vm.expectRevert(abi.encodeWithSelector(Pausable.EnforcedPause.selector));
+        hook.pause(); // Should revert when already paused
+    }
+
+    function test64_UnpauseWhenNotPaused() public {
+        vm.expectRevert(abi.encodeWithSelector(Pausable.ExpectedPause.selector));
+        hook.unpause(); // Should revert when not paused
+    }
+
+    function test65_ReceiveETH() public {
+        uint256 initialBalance = address(hook).balance;
+        vm.deal(address(this), 1 ether);
+        (bool success,) = address(hook).call{value: 1 ether}("");
+        assertTrue(success, "Should receive ETH");
+        assertEq(address(hook).balance, initialBalance + 1 ether, "Balance should increase");
+    }
+
+    function test66_ReceiveETHMultiple() public {
+        uint256 initialBalance = address(hook).balance;
+        vm.deal(address(this), 5 ether);
+        (bool success,) = address(hook).call{value: 1 ether}("");
+        assertTrue(success, "Should receive first ETH");
+        (bool success2,) = address(hook).call{value: 2 ether}("");
+        assertTrue(success2, "Should receive second ETH");
+        assertEq(address(hook).balance, initialBalance + 3 ether, "Balance should increase");
+    }
+
+    function test67_ReceiveETHFromDifferentAddresses() public {
+        uint256 initialBalance = address(hook).balance;
+        vm.deal(ALICE, 1 ether);
+        vm.prank(ALICE);
+        (bool success,) = address(hook).call{value: 1 ether}("");
+        assertTrue(success, "Should receive ETH from Alice");
+        
+        vm.deal(BOB, 1 ether);
+        vm.prank(BOB);
+        (bool success2,) = address(hook).call{value: 1 ether}("");
+        assertTrue(success2, "Should receive ETH from Bob");
+        
+        assertEq(address(hook).balance, initialBalance + 2 ether, "Balance should increase");
+    }
+
+    function test68_AdminFunctionsWhenPaused() public {
+        hook.pause();
+        hook.setOperatorAuthorization(ALICE, true);
+        hook.setLVRThreshold(100);
+        assertTrue(hook.authorizedOperators(ALICE), "Should work when paused");
+        assertEq(hook.lvrThreshold(), 100, "Should work when paused");
+    }
+
+    function test69_AdminFunctionsGasUsage() public {
+        uint256 gasStart = gasleft();
+        hook.setOperatorAuthorization(ALICE, true);
+        uint256 gasUsed = gasStart - gasleft();
+        assertTrue(gasUsed < 100000, "Gas usage should be reasonable");
+    }
+
+    function test70_AdminFunctionsStateChanges() public {
+        // Test multiple state changes
+        hook.setOperatorAuthorization(ALICE, true);
+        hook.setLVRThreshold(75);
+        hook.pause();
+        
+        assertTrue(hook.authorizedOperators(ALICE), "Alice should be authorized");
+        assertEq(hook.lvrThreshold(), 75, "Threshold should be updated");
+        assertTrue(hook.paused(), "Should be paused");
     }
 }
